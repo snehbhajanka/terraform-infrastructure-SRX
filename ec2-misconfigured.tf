@@ -44,7 +44,7 @@ resource "aws_security_group" "insecure_sg" {
 
   # MISCONFIGURATION: Allow SSH from anywhere
   ingress {
-    description = "SSH from anywhere"  
+    description = "SSH from anywhere"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
@@ -55,7 +55,7 @@ resource "aws_security_group" "insecure_sg" {
   ingress {
     description = "RDP from anywhere"
     from_port   = 3389
-    to_port     = 3389  
+    to_port     = 3389
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -77,7 +77,7 @@ resource "aws_security_group" "insecure_sg" {
 
 # MISCONFIGURATION: Hardcoded SSH key pair (in real world, this would be generated)
 resource "aws_key_pair" "insecure_key" {
-  key_name   = "insecure-demo-key"
+  key_name = "insecure-demo-key"
   # MISCONFIGURATION: This is a demo key, never use hardcoded keys in real scenarios
   public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC7iOWyOJ... demo-key-not-for-production"
 
@@ -102,19 +102,19 @@ data "aws_ami" "amazon_linux" {
 resource "aws_instance" "insecure_instance" {
   ami                    = data.aws_ami.amazon_linux.id
   instance_type          = "t3.micro"
-  key_name              = aws_key_pair.insecure_key.key_name
+  key_name               = aws_key_pair.insecure_key.key_name
   vpc_security_group_ids = [aws_security_group.insecure_sg.id]
-  
+
   # MISCONFIGURATION: Using default subnet instead of private subnet
   subnet_id = tolist(data.aws_subnets.default.ids)[0]
-  
+
   # MISCONFIGURATION: Auto-assign public IP (should use NAT Gateway instead)
   associate_public_ip_address = true
-  
+
   # MISCONFIGURATION: No IMDSv2 enforcement
   metadata_options {
-    http_endpoint = "enabled"
-    http_tokens   = "optional"  # Should be "required" for security
+    http_endpoint               = "enabled"
+    http_tokens                 = "optional" # Should be "required" for security
     http_put_response_hop_limit = 1
   }
 
@@ -122,11 +122,11 @@ resource "aws_instance" "insecure_instance" {
   root_block_device {
     volume_type = "gp3"
     volume_size = 20
-    encrypted   = false  # Should be true for security
-    
+    encrypted   = false # Should be true for security
+
     # MISCONFIGURATION: No KMS key specified
     # kms_key_id = "alias/aws/ebs"
-    
+
     delete_on_termination = true
 
     tags = {
@@ -160,7 +160,7 @@ resource "aws_instance" "insecure_instance" {
 
   tags = {
     Name        = "Insecure EC2 Instance"
-    Environment = "Demo" 
+    Environment = "Demo"
     Purpose     = "Security Testing"
     Owner       = "Demo User"
   }
@@ -198,9 +198,9 @@ resource "aws_iam_role_policy" "insecure_policy" {
     Version = "2012-10-17"
     Statement = [
       {
-        Effect = "Allow"
-        Action = "*"  # MISCONFIGURATION: Allow all actions
-        Resource = "*"  # MISCONFIGURATION: On all resources
+        Effect   = "Allow"
+        Action   = "*" # MISCONFIGURATION: Allow all actions
+        Resource = "*" # MISCONFIGURATION: On all resources
       }
     ]
   })
@@ -220,7 +220,7 @@ output "instance_id" {
 output "instance_public_ip" {
   description = "Public IP address of the misconfigured EC2 instance"
   value       = aws_instance.insecure_instance.public_ip
-  sensitive   = false  # MISCONFIGURATION: Should be sensitive
+  sensitive   = false # MISCONFIGURATION: Should be sensitive
 }
 
 output "instance_private_ip" {

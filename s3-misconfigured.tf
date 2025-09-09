@@ -2,23 +2,13 @@
 # This file contains security misconfigurations for demonstration purposes
 # DO NOT use in production environments
 
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-  }
-}
-
-provider "aws" {
-  region = "us-east-1"
-}
+# Get current AWS account ID for secure bucket policy
+data "aws_caller_identity" "current" {}
 
 # Misconfigured S3 bucket with multiple security issues
 resource "aws_s3_bucket" "misconfigured_bucket" {
   bucket = "my-insecure-bucket-${random_id.bucket_suffix.hex}"
-  
+
   # MISCONFIGURATION: Force destroy allows deletion even with objects
   force_destroy = true
 
@@ -33,18 +23,18 @@ resource "random_id" "bucket_suffix" {
   byte_length = 4
 }
 
-# MISCONFIGURATION: Public read access to bucket
+# SECURITY FIX: Block all public access to the bucket
 resource "aws_s3_bucket_public_access_block" "misconfigured_bucket_pab" {
   bucket = aws_s3_bucket.misconfigured_bucket.id
 
-  # These should be true for security, but are false for misconfig demo
-  block_public_acls       = false
-  block_public_policy     = false
-  ignore_public_acls      = false
-  restrict_public_buckets = false
+  # Security best practice: Block all public access
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
 }
 
-# MISCONFIGURATION: Overly permissive bucket policy allowing public access
+# SECURITY FIX: Restrictive bucket policy - only allows access from AWS account owner
 resource "aws_s3_bucket_policy" "misconfigured_bucket_policy" {
   bucket = aws_s3_bucket.misconfigured_bucket.id
 
@@ -52,18 +42,19 @@ resource "aws_s3_bucket_policy" "misconfigured_bucket_policy" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid       = "PublicReadGetObject"
-        Effect    = "Allow"
-        Principal = "*"
-        Action    = "s3:GetObject"
-        Resource  = "${aws_s3_bucket.misconfigured_bucket.arn}/*"
-      },
-      {
-        Sid       = "PublicListBucket" 
-        Effect    = "Allow"
-        Principal = "*"
-        Action    = "s3:ListBucket"
-        Resource  = aws_s3_bucket.misconfigured_bucket.arn
+        Sid    = "RestrictedAccess"
+        Effect = "Allow"
+        Principal = {
+          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+        }
+        Action = [
+          "s3:GetObject",
+          "s3:ListBucket"
+        ]
+        Resource = [
+          aws_s3_bucket.misconfigured_bucket.arn,
+          "${aws_s3_bucket.misconfigured_bucket.arn}/*"
+        ]
       }
     ]
   })
@@ -83,13 +74,13 @@ resource "aws_s3_bucket_policy" "misconfigured_bucket_policy" {
 
 # Sample object with insecure content type
 resource "aws_s3_object" "sample_file" {
-  bucket = aws_s3_bucket.misconfigured_bucket.id
-  key    = "sample-data.txt"
+  bucket  = aws_s3_bucket.misconfigured_bucket.id
+  key     = "sample-data.txt"
   content = "This is sample data in an insecure bucket"
-  
+
   # MISCONFIGURATION: No server-side encryption for object
   # Missing server_side_encryption
-  
+
   content_type = "text/plain"
 
   tags = {
@@ -104,7 +95,7 @@ output "bucket_name" {
 }
 
 output "bucket_arn" {
-  description = "ARN of the misconfigured S3 bucket" 
+  description = "ARN of the misconfigured S3 bucket"
   value       = aws_s3_bucket.misconfigured_bucket.arn
 }
 
