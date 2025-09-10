@@ -16,6 +16,16 @@ Sample Terraform configuration creating an AWS S3 bucket with multiple security 
 - Overly permissive bucket policy
 - No lifecycle management
 
+### `s3-multiple-buckets.tf`
+Sample Terraform configuration creating 5 AWS S3 buckets with multiple security misconfigurations:
+- Public read access enabled for all buckets
+- No server-side encryption
+- No versioning enabled
+- No access logging
+- Overly permissive bucket policies
+- No lifecycle management
+- Sample objects with sensitive content exposed publicly
+
 ### `ec2-misconfigured.tf`  
 Sample Terraform configuration creating an AWS EC2 instance with multiple security misconfigurations:
 - Overly permissive security group (0.0.0.0/0 access)
