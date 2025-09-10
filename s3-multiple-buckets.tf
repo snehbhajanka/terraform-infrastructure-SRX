@@ -8,228 +8,84 @@ resource "random_id" "multiple_buckets_suffix" {
   byte_length = 4
 }
 
-# MISCONFIGURED S3 Bucket 1 - Public Web Assets
-resource "aws_s3_bucket" "public_bucket_1" {
-  bucket = "public-web-assets-${random_id.multiple_buckets_suffix.hex}"
-  
-  # MISCONFIGURATION: Force destroy allows deletion even with objects
-  force_destroy = true
-
-  tags = {
-    Name        = "Public Web Assets Bucket"
-    Environment = "Demo"
-    Purpose     = "Security Testing"
-    BucketNumber = "1"
-  }
-}
-
-# MISCONFIGURATION: Public read access to bucket 1
-resource "aws_s3_bucket_public_access_block" "public_bucket_1_pab" {
-  bucket = aws_s3_bucket.public_bucket_1.id
-
-  # These should be true for security, but are false for misconfig demo
-  block_public_acls       = false
-  block_public_policy     = false
-  ignore_public_acls      = false
-  restrict_public_buckets = false
-}
-
-# MISCONFIGURATION: Overly permissive bucket policy allowing public access for bucket 1
-resource "aws_s3_bucket_policy" "public_bucket_1_policy" {
-  bucket = aws_s3_bucket.public_bucket_1.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid       = "PublicReadGetObject"
-        Effect    = "Allow"
-        Principal = "*"
-        Action    = "s3:GetObject"
-        Resource  = "${aws_s3_bucket.public_bucket_1.arn}/*"
-      },
-      {
-        Sid       = "PublicListBucket" 
-        Effect    = "Allow"
-        Principal = "*"
-        Action    = "s3:ListBucket"
-        Resource  = aws_s3_bucket.public_bucket_1.arn
+# Bucket configurations for iteration
+locals {
+  bucket_configs = {
+    1 = {
+      name_suffix = "web-assets"
+      display_name = "Public Web Assets Bucket"
+      sample_file = {
+        key = "index.html"
+        content = "<html><body><h1>Public Web Assets - Insecure Bucket 1</h1></body></html>"
+        content_type = "text/html"
+        purpose = "Demo Web Content"
       }
-    ]
-  })
-}
-
-# MISCONFIGURED S3 Bucket 2 - Public Downloads
-resource "aws_s3_bucket" "public_bucket_2" {
-  bucket = "public-downloads-${random_id.multiple_buckets_suffix.hex}"
-  
-  # MISCONFIGURATION: Force destroy allows deletion even with objects
-  force_destroy = true
-
-  tags = {
-    Name        = "Public Downloads Bucket"
-    Environment = "Demo"
-    Purpose     = "Security Testing"
-    BucketNumber = "2"
-  }
-}
-
-# MISCONFIGURATION: Public read access to bucket 2
-resource "aws_s3_bucket_public_access_block" "public_bucket_2_pab" {
-  bucket = aws_s3_bucket.public_bucket_2.id
-
-  # These should be true for security, but are false for misconfig demo
-  block_public_acls       = false
-  block_public_policy     = false
-  ignore_public_acls      = false
-  restrict_public_buckets = false
-}
-
-# MISCONFIGURATION: Overly permissive bucket policy allowing public access for bucket 2
-resource "aws_s3_bucket_policy" "public_bucket_2_policy" {
-  bucket = aws_s3_bucket.public_bucket_2.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid       = "PublicReadGetObject"
-        Effect    = "Allow"
-        Principal = "*"
-        Action    = "s3:GetObject"
-        Resource  = "${aws_s3_bucket.public_bucket_2.arn}/*"
-      },
-      {
-        Sid       = "PublicListBucket" 
-        Effect    = "Allow"
-        Principal = "*"
-        Action    = "s3:ListBucket"
-        Resource  = aws_s3_bucket.public_bucket_2.arn
+    }
+    2 = {
+      name_suffix = "downloads"
+      display_name = "Public Downloads Bucket"
+      sample_file = {
+        key = "download.txt"
+        content = "This is a sample download file in an insecure bucket"
+        content_type = "text/plain"
+        purpose = "Demo Download"
       }
-    ]
-  })
-}
-
-# MISCONFIGURED S3 Bucket 3 - Public Media
-resource "aws_s3_bucket" "public_bucket_3" {
-  bucket = "public-media-${random_id.multiple_buckets_suffix.hex}"
-  
-  # MISCONFIGURATION: Force destroy allows deletion even with objects
-  force_destroy = true
-
-  tags = {
-    Name        = "Public Media Bucket"
-    Environment = "Demo"
-    Purpose     = "Security Testing"
-    BucketNumber = "3"
-  }
-}
-
-# MISCONFIGURATION: Public read access to bucket 3
-resource "aws_s3_bucket_public_access_block" "public_bucket_3_pab" {
-  bucket = aws_s3_bucket.public_bucket_3.id
-
-  # These should be true for security, but are false for misconfig demo
-  block_public_acls       = false
-  block_public_policy     = false
-  ignore_public_acls      = false
-  restrict_public_buckets = false
-}
-
-# MISCONFIGURATION: Overly permissive bucket policy allowing public access for bucket 3
-resource "aws_s3_bucket_policy" "public_bucket_3_policy" {
-  bucket = aws_s3_bucket.public_bucket_3.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid       = "PublicReadGetObject"
-        Effect    = "Allow"
-        Principal = "*"
-        Action    = "s3:GetObject"
-        Resource  = "${aws_s3_bucket.public_bucket_3.arn}/*"
-      },
-      {
-        Sid       = "PublicListBucket" 
-        Effect    = "Allow"
-        Principal = "*"
-        Action    = "s3:ListBucket"
-        Resource  = aws_s3_bucket.public_bucket_3.arn
+    }
+    3 = {
+      name_suffix = "media"
+      display_name = "Public Media Bucket"
+      sample_file = {
+        key = "media.txt"
+        content = "Sample media file metadata in an insecure bucket"
+        content_type = "text/plain"
+        purpose = "Demo Media"
       }
-    ]
-  })
-}
-
-# MISCONFIGURED S3 Bucket 4 - Public Documents
-resource "aws_s3_bucket" "public_bucket_4" {
-  bucket = "public-documents-${random_id.multiple_buckets_suffix.hex}"
-  
-  # MISCONFIGURATION: Force destroy allows deletion even with objects
-  force_destroy = true
-
-  tags = {
-    Name        = "Public Documents Bucket"
-    Environment = "Demo"
-    Purpose     = "Security Testing"
-    BucketNumber = "4"
-  }
-}
-
-# MISCONFIGURATION: Public read access to bucket 4
-resource "aws_s3_bucket_public_access_block" "public_bucket_4_pab" {
-  bucket = aws_s3_bucket.public_bucket_4.id
-
-  # These should be true for security, but are false for misconfig demo
-  block_public_acls       = false
-  block_public_policy     = false
-  ignore_public_acls      = false
-  restrict_public_buckets = false
-}
-
-# MISCONFIGURATION: Overly permissive bucket policy allowing public access for bucket 4
-resource "aws_s3_bucket_policy" "public_bucket_4_policy" {
-  bucket = aws_s3_bucket.public_bucket_4.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid       = "PublicReadGetObject"
-        Effect    = "Allow"
-        Principal = "*"
-        Action    = "s3:GetObject"
-        Resource  = "${aws_s3_bucket.public_bucket_4.arn}/*"
-      },
-      {
-        Sid       = "PublicListBucket" 
-        Effect    = "Allow"
-        Principal = "*"
-        Action    = "s3:ListBucket"
-        Resource  = aws_s3_bucket.public_bucket_4.arn
+    }
+    4 = {
+      name_suffix = "documents"
+      display_name = "Public Documents Bucket"
+      sample_file = {
+        key = "document.txt"
+        content = "Sensitive document content that should not be public"
+        content_type = "text/plain"
+        purpose = "Demo Document"
       }
-    ]
-  })
+    }
+    5 = {
+      name_suffix = "backups"
+      display_name = "Public Backups Bucket"
+      sample_file = {
+        key = "backup.sql"
+        content = "-- Database backup file with sensitive data\nCREATE TABLE users (id INT, password VARCHAR(255));"
+        content_type = "application/sql"
+        purpose = "Demo Backup"
+      }
+    }
+  }
 }
 
-# MISCONFIGURED S3 Bucket 5 - Public Backups
-resource "aws_s3_bucket" "public_bucket_5" {
-  bucket = "public-backups-${random_id.multiple_buckets_suffix.hex}"
+# MISCONFIGURED S3 Buckets - Iterating over configurations
+resource "aws_s3_bucket" "public_bucket" {
+  for_each = local.bucket_configs
+  
+  bucket = "public-${each.value.name_suffix}-${random_id.multiple_buckets_suffix.hex}"
   
   # MISCONFIGURATION: Force destroy allows deletion even with objects
   force_destroy = true
 
   tags = {
-    Name        = "Public Backups Bucket"
+    Name        = each.value.display_name
     Environment = "Demo"
     Purpose     = "Security Testing"
-    BucketNumber = "5"
+    BucketNumber = each.key
   }
 }
 
-# MISCONFIGURATION: Public read access to bucket 5
-resource "aws_s3_bucket_public_access_block" "public_bucket_5_pab" {
-  bucket = aws_s3_bucket.public_bucket_5.id
+# MISCONFIGURATION: Public read access to all buckets
+resource "aws_s3_bucket_public_access_block" "public_bucket_pab" {
+  for_each = local.bucket_configs
+  
+  bucket = aws_s3_bucket.public_bucket[each.key].id
 
   # These should be true for security, but are false for misconfig demo
   block_public_acls       = false
@@ -238,9 +94,11 @@ resource "aws_s3_bucket_public_access_block" "public_bucket_5_pab" {
   restrict_public_buckets = false
 }
 
-# MISCONFIGURATION: Overly permissive bucket policy allowing public access for bucket 5
-resource "aws_s3_bucket_policy" "public_bucket_5_policy" {
-  bucket = aws_s3_bucket.public_bucket_5.id
+# MISCONFIGURATION: Overly permissive bucket policy allowing public access for all buckets
+resource "aws_s3_bucket_policy" "public_bucket_policy" {
+  for_each = local.bucket_configs
+  
+  bucket = aws_s3_bucket.public_bucket[each.key].id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -250,14 +108,14 @@ resource "aws_s3_bucket_policy" "public_bucket_5_policy" {
         Effect    = "Allow"
         Principal = "*"
         Action    = "s3:GetObject"
-        Resource  = "${aws_s3_bucket.public_bucket_5.arn}/*"
+        Resource  = "${aws_s3_bucket.public_bucket[each.key].arn}/*"
       },
       {
         Sid       = "PublicListBucket" 
         Effect    = "Allow"
         Principal = "*"
         Action    = "s3:ListBucket"
-        Resource  = aws_s3_bucket.public_bucket_5.arn
+        Resource  = aws_s3_bucket.public_bucket[each.key].arn
       }
     ]
   })
@@ -273,155 +131,47 @@ resource "aws_s3_bucket_policy" "public_bucket_5_policy" {
 # Missing aws_s3_bucket_logging for all buckets
 
 # Sample objects with insecure content
-resource "aws_s3_object" "sample_file_1" {
-  bucket = aws_s3_bucket.public_bucket_1.id
-  key    = "index.html"
-  content = "<html><body><h1>Public Web Assets - Insecure Bucket 1</h1></body></html>"
+resource "aws_s3_object" "sample_file" {
+  for_each = local.bucket_configs
+  
+  bucket = aws_s3_bucket.public_bucket[each.key].id
+  key    = each.value.sample_file.key
+  content = each.value.sample_file.content
   
   # MISCONFIGURATION: No server-side encryption for object
-  content_type = "text/html"
+  content_type = each.value.sample_file.content_type
 
   tags = {
-    Purpose = "Demo Web Content"
+    Purpose = each.value.sample_file.purpose
   }
 }
 
-resource "aws_s3_object" "sample_file_2" {
-  bucket = aws_s3_bucket.public_bucket_2.id
-  key    = "download.txt"
-  content = "This is a sample download file in an insecure bucket"
-  
-  # MISCONFIGURATION: No server-side encryption for object
-  content_type = "text/plain"
-
-  tags = {
-    Purpose = "Demo Download"
+# Outputs for all buckets using for_each
+output "bucket_names" {
+  description = "Names of all public S3 buckets"
+  value = {
+    for k, v in aws_s3_bucket.public_bucket : k => v.id
   }
 }
 
-resource "aws_s3_object" "sample_file_3" {
-  bucket = aws_s3_bucket.public_bucket_3.id
-  key    = "media.txt"
-  content = "Sample media file metadata in an insecure bucket"
-  
-  # MISCONFIGURATION: No server-side encryption for object
-  content_type = "text/plain"
-
-  tags = {
-    Purpose = "Demo Media"
+output "bucket_arns" {
+  description = "ARNs of all public S3 buckets" 
+  value = {
+    for k, v in aws_s3_bucket.public_bucket : k => v.arn
   }
 }
 
-resource "aws_s3_object" "sample_file_4" {
-  bucket = aws_s3_bucket.public_bucket_4.id
-  key    = "document.txt"
-  content = "Sensitive document content that should not be public"
-  
-  # MISCONFIGURATION: No server-side encryption for object
-  content_type = "text/plain"
-
-  tags = {
-    Purpose = "Demo Document"
+output "bucket_domain_names" {
+  description = "Domain names of all public S3 buckets"
+  value = {
+    for k, v in aws_s3_bucket.public_bucket : k => v.bucket_domain_name
   }
-}
-
-resource "aws_s3_object" "sample_file_5" {
-  bucket = aws_s3_bucket.public_bucket_5.id
-  key    = "backup.sql"
-  content = "-- Database backup file with sensitive data\nCREATE TABLE users (id INT, password VARCHAR(255));"
-  
-  # MISCONFIGURATION: No server-side encryption for object
-  content_type = "application/sql"
-
-  tags = {
-    Purpose = "Demo Backup"
-  }
-}
-
-# Outputs for all 5 buckets
-output "bucket_1_name" {
-  description = "Name of the public web assets S3 bucket"
-  value       = aws_s3_bucket.public_bucket_1.id
-}
-
-output "bucket_1_arn" {
-  description = "ARN of the public web assets S3 bucket" 
-  value       = aws_s3_bucket.public_bucket_1.arn
-}
-
-output "bucket_1_domain_name" {
-  description = "Domain name of the public web assets S3 bucket"
-  value       = aws_s3_bucket.public_bucket_1.bucket_domain_name
-}
-
-output "bucket_2_name" {
-  description = "Name of the public downloads S3 bucket"
-  value       = aws_s3_bucket.public_bucket_2.id
-}
-
-output "bucket_2_arn" {
-  description = "ARN of the public downloads S3 bucket" 
-  value       = aws_s3_bucket.public_bucket_2.arn
-}
-
-output "bucket_2_domain_name" {
-  description = "Domain name of the public downloads S3 bucket"
-  value       = aws_s3_bucket.public_bucket_2.bucket_domain_name
-}
-
-output "bucket_3_name" {
-  description = "Name of the public media S3 bucket"
-  value       = aws_s3_bucket.public_bucket_3.id
-}
-
-output "bucket_3_arn" {
-  description = "ARN of the public media S3 bucket" 
-  value       = aws_s3_bucket.public_bucket_3.arn
-}
-
-output "bucket_3_domain_name" {
-  description = "Domain name of the public media S3 bucket"
-  value       = aws_s3_bucket.public_bucket_3.bucket_domain_name
-}
-
-output "bucket_4_name" {
-  description = "Name of the public documents S3 bucket"
-  value       = aws_s3_bucket.public_bucket_4.id
-}
-
-output "bucket_4_arn" {
-  description = "ARN of the public documents S3 bucket" 
-  value       = aws_s3_bucket.public_bucket_4.arn
-}
-
-output "bucket_4_domain_name" {
-  description = "Domain name of the public documents S3 bucket"
-  value       = aws_s3_bucket.public_bucket_4.bucket_domain_name
-}
-
-output "bucket_5_name" {
-  description = "Name of the public backups S3 bucket"
-  value       = aws_s3_bucket.public_bucket_5.id
-}
-
-output "bucket_5_arn" {
-  description = "ARN of the public backups S3 bucket" 
-  value       = aws_s3_bucket.public_bucket_5.arn
-}
-
-output "bucket_5_domain_name" {
-  description = "Domain name of the public backups S3 bucket"
-  value       = aws_s3_bucket.public_bucket_5.bucket_domain_name
 }
 
 # Summary output
 output "all_bucket_names" {
   description = "List of all public bucket names"
   value = [
-    aws_s3_bucket.public_bucket_1.id,
-    aws_s3_bucket.public_bucket_2.id,
-    aws_s3_bucket.public_bucket_3.id,
-    aws_s3_bucket.public_bucket_4.id,
-    aws_s3_bucket.public_bucket_5.id
+    for bucket in aws_s3_bucket.public_bucket : bucket.id
   ]
 }
